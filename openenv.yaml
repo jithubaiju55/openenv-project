@@ -1,0 +1,88 @@
+name: sql_repair_env
+version: "1.0.0"
+description: >
+  Real-world SQL query repair environment for AI agent training.
+  An agent is given a broken SQL query and must fix it to match
+  expected output against a SQLite database.
+
+author: "Your Team Name"
+tags:
+  - openenv
+  - sql
+  - developer-tools
+  - code-repair
+  - real-world
+
+tasks:
+  - id: easy
+    description: "Fix SQL syntax errors (misspelled keywords)"
+    difficulty: easy
+    max_attempts: 5
+    scoring: "0.0–1.0 partial credit"
+
+  - id: medium
+    description: "Fix wrong JOIN column references"
+    difficulty: medium
+    max_attempts: 5
+    scoring: "0.0–1.0 partial credit"
+
+  - id: hard
+    description: "Fix wrong aggregation logic (WHERE vs HAVING)"
+    difficulty: hard
+    max_attempts: 5
+    scoring: "0.0–1.0 partial credit"
+
+observation_space:
+  broken_query:     "string — the broken SQL query to fix"
+  schema:           "string — database schema description"
+  error_message:    "string — SQL execution error from last attempt"
+  task_description: "string — what the query should do"
+  task_id:          "string — easy | medium | hard"
+  difficulty:       "string — easy | medium | hard"
+  attempt_number:   "int — current attempt (0 = just reset)"
+  max_attempts:     "int — maximum allowed attempts (5)"
+  feedback:         "string — detailed grader feedback"
+  hint:             "string — appears after 2 failed attempts"
+
+action_space:
+  sql_query:    "string (required) — your fixed SQL query"
+  explanation:  "string (optional) — your reasoning"
+
+reward:
+  type: continuous
+  range: [0.0, 1.0]
+  shaping:
+    - "+0.30 query executes without error"
+    - "+0.20 correct columns returned"
+    - "+0.10 correct row count"
+    - "+0.40 all row values match (partial credit for partial matches)"
+    - "×0.85 penalty for exhausting all attempts"
+
+endpoints:
+  - path: /reset
+    method: POST
+    description: Start a new episode
+  - path: /step
+    method: POST
+    description: Submit a fixed SQL query
+  - path: /state
+    method: GET
+    description: Get current episode metadata
+  - path: /tasks
+    method: GET
+    description: List all tasks with action schema
+  - path: /grader
+    method: POST
+    description: Grade a query without running a full episode
+  - path: /baseline
+    method: GET
+    description: Run oracle baseline and return scores for all 3 tasks
+  - path: /health
+    method: GET
+    description: Health check
+
+runtime:
+  framework: FastAPI + OpenEnv
+  python: "3.11"
+  docker: true
+  hf_spaces: true

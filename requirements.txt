@@ -1,0 +1,18 @@
+# Core OpenEnv framework
+openenv-core
+
+# Web server
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+
+# WebSocket support
+websockets>=12.0
+
+# Data validation (used by OpenEnv models)
+pydantic>=2.0.0
+
+# HTTP client (used by baseline inference script)
+openai>=1.0.0
+
+# Optional: for running the baseline
+httpx>=0.25.0

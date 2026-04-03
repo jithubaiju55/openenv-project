@@ -1,0 +1,15 @@
+version = 1
+requires-python = ">=3.11"
+
+[[package]]
+name = "sql-repair-env"
+version = "1.0.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "openenv-core" },
+    { name = "fastapi" },
+    { name = "uvicorn" },
+    { name = "websockets" },
+    { name = "pydantic" },
+    { name = "openai" },
+]
