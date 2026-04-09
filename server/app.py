@@ -4,32 +4,27 @@ server/app.py - FastAPI server for the SQL Repair Environment.
 
 import os
 import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi.responses import JSONResponse
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "server"))
+
+from fastapi.responses import JSONResponse, HTMLResponse
 from openenv.core.env_server import create_fastapi_app
 from models import SQLAction, SQLObservation
 from server.environment import SQLRepairEnvironment, TASKS
 
-# Auto-creates /reset /step /state /health /ws /docs
 app = create_fastapi_app(SQLRepairEnvironment, SQLAction, SQLObservation)
 
+# ── read the UI HTML once at startup ─────────────────────────────────────────
+_UI_PATH = os.path.join(ROOT, "ui.html")
+with open(_UI_PATH, "r") as f:
+    _UI_HTML = f.read()
 
-@app.get("/")
+
+@app.get("/", response_class=HTMLResponse)
 def root():
-    return JSONResponse(content={
-        "name":        "SQL Repair Environment",
-        "version":     "1.0.0",
-        "status":      "running",
-        "description": "OpenEnv environment for AI agents to fix broken SQL queries",
-        "endpoints": {
-            "health":   "/health",
-            "docs":     "/docs",
-            "tasks":    "/tasks",
-            "grader":   "/grader",
-            "baseline": "/baseline",
-        }
-    })
+    return HTMLResponse(content=_UI_HTML)
 
 
 @app.get("/tasks", tags=["Competition"])
@@ -69,11 +64,11 @@ def run_baseline():
 
 
 def main():
-    """Entry point for 'uv run server' command."""
     import uvicorn
-    port = int(os.environ.get("PORT", 7860))
-    host = os.environ.get("HOST", "0.0.0.0")
-    uvicorn.run("server.app:app", host=host, port=port, workers=4)
+    port    = int(os.environ.get("PORT", 7860))
+    host    = os.environ.get("HOST", "0.0.0.0")
+    workers = int(os.environ.get("WORKERS", 4))
+    uvicorn.run("server.app:app", host=host, port=port, workers=workers)
 
 
 if __name__ == "__main__":
