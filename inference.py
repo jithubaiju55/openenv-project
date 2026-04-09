@@ -1,45 +1,32 @@
 """
-baseline/inference.py - LLM Baseline Agent for the SQL Repair Environment.
-
-Usage:
-    set OPENAI_API_KEY=gsk_your_groq_key_here
-    python baseline/inference.py --url https://WALKMAN303-sql-repair-env.hf.space
+inference.py - SQL Repair Environment Baseline Agent
 """
 
 import os
 import sys
-import argparse
-import json
+from typing import List, Optional
 
-# Allow importing from parent directory
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, ROOT)
 
-print("Starting baseline script...")
+from openai import OpenAI
+from client import SQLRepairEnv
+from models import SQLAction
 
-try:
-    from openai import OpenAI
-    print("OpenAI package loaded OK")
-except ImportError:
-    print("ERROR: openai not installed. Run: pip install openai")
-    sys.exit(1)
+HF_TOKEN         = os.getenv("HF_TOKEN")
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
-try:
-    from client import SQLRepairEnv
-    from models import SQLAction
-    print("Client and models loaded OK")
-except ImportError as e:
-    print(f"ERROR importing client/models: {e}")
-    print("Make sure PYTHONPATH includes OpenEnv and sql-repair-env folders")
-    sys.exit(1)
-
-
-# ── System prompt ─────────────────────────────────────────────────────────────
+# SPACE_URL — validator injects this pointing to our HF Space
+SPACE_URL = os.getenv(
+    "SPACE_URL",
+    "https://WALKMAN303-sql-repair-env.hf.space"
+)
+BENCHMARK = "sql-repair-env"
+TASK_IDS  = ["easy", "medium", "hard"]
+MAX_STEPS = 5
 
 SYSTEM_PROMPT = """You are an expert SQL developer who fixes broken SQL queries.
-
-You will be given a broken SQL query and the database schema.
 Return ONLY the corrected SQL query. No explanation, no markdown, no code blocks.
-Just raw SQL.
 
 Common bugs:
 - Misspelled keywords: SELCT->SELECT, FORM->FROM, WERE->WHERE, ORDR->ORDER
@@ -48,141 +35,151 @@ Common bugs:
 """
 
 
-def build_prompt(observation) -> str:
-    """Build the user message from observation."""
+def log_start(task: str, env: str, model: str) -> None:
+    print(f"[START] task={task} env={env} model={model}", flush=True)
+
+
+def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
+    error_val    = error if error else "null"
+    done_val     = str(done).lower()
+    action_clean = action.replace("\n", " ")[:60]
+    print(
+        f"[STEP] step={step} action={action_clean!r} reward={reward:.2f} done={done_val} error={error_val}",
+        flush=True,
+    )
+
+
+def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+    print(
+        f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}",
+        flush=True,
+    )
+
+
+def build_prompt(obs) -> str:
     parts = [
-        f"Task: {observation.task_description}",
+        f"Task: {obs.task_description}",
         "",
         "Database Schema:",
-        observation.db_schema,
+        obs.db_schema,
         "",
         "Broken Query:",
-        observation.broken_query,
+        obs.broken_query,
     ]
-    if observation.error_message:
-        parts += ["", f"Error from last attempt: {observation.error_message}"]
-    if observation.feedback and observation.attempt_number > 0:
-        parts += ["", f"Grader feedback: {observation.feedback}"]
-    if observation.hint:
-        parts += ["", f"Hint: {observation.hint}"]
+    if obs.error_message:
+        parts += ["", f"Error: {obs.error_message}"]
+    if obs.feedback and obs.attempt_number > 0:
+        parts += ["", f"Grader feedback: {obs.feedback}"]
+    if obs.hint:
+        parts += ["", f"Hint: {obs.hint}"]
     parts += ["", "Return ONLY the fixed SQL query:"]
     return "\n".join(parts)
 
 
-def run_episode(env, client, task_id, verbose=True):
-    """Run one full episode. Returns final score 0.0-1.0."""
-    if verbose:
-        print(f"\n{'─'*60}")
-        print(f"Task: {task_id.upper()}")
-        print(f"{'─'*60}")
+def run_task(env, client, model_name: str, task_id: str) -> float:
+    rewards:     List[float] = []
+    steps_taken: int         = 0
+    score:       float       = 0.0
+    success:     bool        = False
 
-    result = env.reset(task_id=task_id)
-    obs = result.observation
+    log_start(task=task_id, env=BENCHMARK, model=model_name)
 
-    if verbose:
-        print(f"Broken query:\n{obs.broken_query}\n")
+    try:
+        result = env.reset(task_id=task_id)
+        obs    = result.observation
 
-    while not result.done:
-        prompt = build_prompt(obs)
+        for step in range(1, MAX_STEPS + 1):
+            if result.done:
+                break
 
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": prompt},
-            ],
-            temperature=0.0,
-            max_tokens=500,
-        )
+            prompt = build_prompt(obs)
 
-        fixed_query = response.choices[0].message.content.strip()
-        fixed_query = fixed_query.replace("```sql", "").replace("```", "").strip()
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user",   "content": prompt},
+                ],
+                temperature=0.7,
+                max_tokens=500,
+                stream=False,
+            )
+            fixed_query = response.choices[0].message.content.strip()
+            fixed_query = fixed_query.replace("```sql", "").replace("```", "").strip()
 
-        if verbose:
-            print(f"Attempt {obs.attempt_number + 1}: Submitting ->")
-            print(f"  {fixed_query[:100]}{'...' if len(fixed_query) > 100 else ''}")
+            result      = env.step(SQLAction(sql_query=fixed_query))
+            obs         = result.observation
+            reward      = result.reward or 0.0
+            done        = result.done
+            error       = obs.error_message if obs.error_message else None
 
-        result = env.step(SQLAction(sql_query=fixed_query))
-        obs = result.observation
+            rewards.append(reward)
+            steps_taken = step
 
-        if verbose:
-            print(f"  Score: {result.reward:.4f} | Done: {result.done}")
-            if obs.feedback:
-                print(f"  Feedback: {obs.feedback[:120]}")
+            log_step(step=step, action=fixed_query, reward=reward, done=done, error=error)
 
-    final_score = result.reward or 0.0
-    if verbose:
-        status = "SOLVED" if final_score >= 1.0 else f"SCORE: {final_score:.4f}"
-        print(f"\n  Final result: {status}")
+            if done:
+                break
 
-    return final_score
+        score   = max(rewards) if rewards else 0.01
+        score   = min(max(score, 0.01), 0.99)
+        success = score >= 0.99
+
+    except Exception as e:
+        print(f"[DEBUG] Task error: {e}", flush=True)
+        score   = 0.01
+        success = False
+
+    finally:
+        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+
+    return score
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--url",  default="http://localhost:7860")
-    parser.add_argument("--task", choices=["easy", "medium", "hard", "all"], default="all")
-    parser.add_argument("--quiet", action="store_true")
-    args = parser.parse_args()
+    # Strict env vars — exactly as validator requires
+    api_base_url = os.environ["API_BASE_URL"]
+    api_key      = os.environ["API_KEY"]
+    model_name   = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 
-    # Check API key
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("\nERROR: OPENAI_API_KEY is not set!")
-        print("Run this first:")
-        print("  set OPENAI_API_KEY=gsk_your_groq_key_here")
-        sys.exit(1)
+    print(f"[DEBUG] API_BASE_URL={api_base_url}", flush=True)
+    print(f"[DEBUG] MODEL_NAME={model_name}", flush=True)
+    print(f"[DEBUG] SPACE_URL={SPACE_URL}", flush=True)
+    print(f"[DEBUG] API_KEY present={bool(api_key)}", flush=True)
 
-    print(f"API key found: {api_key[:8]}...")
-
-    # Groq client - same as OpenAI but different base_url
     client = OpenAI(
+        base_url=api_base_url,
         api_key=api_key,
-        base_url="https://api.groq.com/openai/v1"
     )
 
-    task_ids = ["easy", "medium", "hard"] if args.task == "all" else [args.task]
-    verbose  = not args.quiet
+    all_scores = {}
 
-    print(f"\n{'='*60}")
-    print(f"SQL Repair Environment - LLM Baseline (llama-3.1-8b-instant)")
-    print(f"Server: {args.url}")
-    print(f"Tasks:  {', '.join(task_ids)}")
-    print(f"{'='*60}")
+    # Wrap environment connection in try/except
+    try:
+        env_client = SQLRepairEnv(base_url=SPACE_URL)
+        with env_client.sync() as env:
+            for task_id in TASK_IDS:
+                try:
+                    score = run_task(env, client, model_name, task_id)
+                except Exception as e:
+                    print(f"[DEBUG] Task {task_id} error: {e}", flush=True)
+                    log_start(task=task_id, env=BENCHMARK, model=model_name)
+                    log_end(success=False, steps=0, score=0.01, rewards=[0.01])
+                    score = 0.01
+                all_scores[task_id] = score
 
-    scores = {}
+    except Exception as e:
+        # WebSocket connection failed — still emit required output
+        print(f"[DEBUG] Connection error: {e}", flush=True)
+        for task_id in TASK_IDS:
+            if task_id not in all_scores:
+                log_start(task=task_id, env=BENCHMARK, model=model_name)
+                log_end(success=False, steps=0, score=0.01, rewards=[0.01])
+                all_scores[task_id] = 0.0
 
-    with SQLRepairEnv(base_url=args.url).sync() as env:
-        for task_id in task_ids:
-            try:
-                score = run_episode(env, client, task_id, verbose=verbose)
-                scores[task_id] = score
-            except Exception as exc:
-                print(f"ERROR on task {task_id}: {exc}")
-                import traceback
-                traceback.print_exc()
-                scores[task_id] = 0.0
-
-    print(f"\n{'='*60}")
-    print(f"BASELINE RESULTS")
-    print(f"{'='*60}")
-    for task_id, score in scores.items():
-        bar    = "█" * int(score * 20)
-        status = "PASS" if score >= 1.0 else "FAIL"
-        print(f"  {task_id:8s}  [{bar:<20}]  {score:.4f}  {status}")
-
-    avg = sum(scores.values()) / len(scores) if scores else 0.0
-    print(f"  {'─'*45}")
-    print(f"  Average: {avg:.4f}")
-    print(f"{'='*60}\n")
-
-    print(json.dumps({
-        "model":         "llama-3.1-8b-instant",
-        "scores":        scores,
-        "average_score": round(avg, 4),
-    }, indent=2))
-
-    return scores
+    avg = sum(all_scores.values()) / len(all_scores) if all_scores else 0.0
+    print(f"[SUMMARY] scores={all_scores} average={avg:.2f}", flush=True)
 
 
 if __name__ == "__main__":
