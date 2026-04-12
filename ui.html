@@ -1,402 +1,550 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Repair Environment v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --paper:#f5f0e8;
-  --paper2:#ede7d4;
-  --paper3:#e0d8c3;
-  --ink:#1a1008;
-  --ink2:#3d2e14;
-  --ink3:#6b5533;
-  --red:#c0392b;
-  --green:#2d6a2d;
-  --amber:#b8720a;
-  --blue:#1a3f6b;
-  --border-w:2px;
-  --sketch:var(--ink2);
-  --f-display:'Fraunces',serif;
-  --f-mono:'DM Mono',monospace;
-  --f-body:'Inter',sans-serif;
+  --paper:#f5f0e8;--paper2:#ede7d4;--paper3:#e0d8c3;--paper4:#d4ccb8;
+  --ink:#1a1008;--ink2:#3d2e14;--ink3:#6b5533;
+  --red:#c0392b;--green:#2d6a2d;--amber:#b8720a;--blue:#1a3f6b;--purple:#5b2d8e;
+  --f-display:'Fraunces',serif;--f-mono:'DM Mono',monospace;--f-body:'Inter',sans-serif;
 }
 body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;min-height:100vh;line-height:1.6;}
-.shell{max-width:1060px;margin:0 auto;padding:0 20px 60px;}
+.shell{max-width:1100px;margin:0 auto;padding:0 20px 80px;}
 
-/* Hand-drawn border mixin via box-shadow trick */
-.box{
-  background:var(--paper);
-  border:2px solid var(--ink2);
-  border-radius:3px 8px 5px 6px / 6px 3px 8px 4px;
-  box-shadow:3px 3px 0 var(--ink3), 4px 4px 0 rgba(0,0,0,.08);
-  position:relative;
-}
-.box::before{
-  content:'';position:absolute;inset:-1px;
-  border:1px dashed rgba(0,0,0,.1);
-  border-radius:4px 9px 6px 7px / 7px 4px 9px 5px;
-  pointer-events:none;
-}
+/* Box */
+.box{background:var(--paper);border:2px solid var(--ink2);border-radius:3px 8px 5px 6px/6px 3px 8px 4px;box-shadow:3px 3px 0 var(--ink3),4px 4px 0 rgba(0,0,0,.08);position:relative;}
+.box::before{content:'';position:absolute;inset:-1px;border:1px dashed rgba(0,0,0,.09);border-radius:4px 9px 6px 7px/7px 4px 9px 5px;pointer-events:none;}
 
-/* ── Header ── */
-.header{padding:36px 0 24px;margin-bottom:32px;border-bottom:3px solid var(--ink2);position:relative;}
+/* Header */
+.header{padding:40px 0 28px;margin-bottom:36px;border-bottom:3px solid var(--ink2);position:relative;}
 .header::after{content:'';position:absolute;bottom:-5px;left:0;right:0;height:1px;border-bottom:1px dashed var(--ink3);}
-.env-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-body);font-size:15px;font-weight:500;color:var(--ink3);margin-bottom:10px;}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--green);border:1.5px solid var(--green);animation:blink 1.5s step-end infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-h1{font-family:var(--f-display);font-size:64px;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-1px;}
-h1 em{color:var(--red);font-style:italic;font-family:var(--f-display);font-size:72px;display:inline-block;transform:rotate(-2deg);}
-.tagline{font-family:var(--f-body);font-size:17px;color:var(--ink3);margin-top:8px;max-width:500px;}
-.version-badge{font-family:var(--f-mono);font-size:14px;color:var(--ink3);border:2px solid var(--ink3);padding:3px 12px;border-radius:2px 6px 3px 5px/5px 2px 6px 3px;transform:rotate(.5deg);display:inline-block;margin-top:6px;}
+.env-tag{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:500;color:var(--ink3);margin-bottom:10px;letter-spacing:.02em;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.5s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+h1{font-family:var(--f-display);font-size:60px;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-1px;}
+h1 em{color:var(--red);font-style:italic;font-size:68px;display:inline-block;transform:rotate(-2deg);}
+.tagline{font-size:16px;color:var(--ink3);margin-top:10px;max-width:560px;line-height:1.6;}
+.version-badge{font-family:var(--f-mono);font-size:13px;color:var(--ink3);border:2px solid var(--ink3);padding:3px 12px;border-radius:2px 6px 3px 5px/5px 2px 6px 3px;transform:rotate(.5deg);display:inline-block;margin-top:8px;}
 
-/* ── Stats ── */
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:32px;}
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:36px;}
 @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr);}}
 .stat{padding:14px 16px;text-align:center;background:var(--paper2);position:relative;}
-.stat-label{font-family:var(--f-body);font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.stat-label{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
 .stat-value{font-family:var(--f-display);font-size:44px;font-weight:900;color:var(--ink);line-height:1;margin-bottom:2px;}
-.stat-sub{font-family:var(--f-body);font-size:13px;color:var(--ink3);}
+.stat-sub{font-size:12px;color:var(--ink3);}
 .stat::after{content:'';position:absolute;bottom:-3px;right:-3px;width:10px;height:10px;background:var(--paper3);border-right:2px solid var(--ink3);border-bottom:2px solid var(--ink3);}
 
-/* ── Sec head ── */
-.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;margin-top:32px;}
+/* Section headers */
+.sec{display:flex;align-items:center;gap:10px;margin:36px 0 16px;}
 .sec-label{font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--ink2);white-space:nowrap;}
-.sec-line{flex:1;border-bottom:2px solid var(--ink2);margin-bottom:2px;opacity:.4;}
+.sec-line{flex:1;border-bottom:2px solid var(--ink2);opacity:.35;}
 .sec-sq{width:10px;height:10px;border:2px solid var(--ink2);transform:rotate(45deg);flex-shrink:0;}
 
-/* ── Tasks ── */
-.tasks{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
-@media(max-width:640px){.tasks{grid-template-columns:1fr;}}
-.task-card{padding:18px;background:var(--paper2);}
-.diff-pill{display:inline-block;font-family:var(--f-mono);font-size:12px;padding:2px 10px;border:1.5px solid;border-radius:1px 4px 2px 3px;margin-bottom:10px;font-weight:500;}
+/* Innovations strip */
+.innovations{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:28px;}
+.innov-card{background:var(--paper2);border:1.5px solid var(--ink3);padding:14px 16px;border-radius:2px 6px 3px 5px/5px 2px 6px 3px;}
+.innov-icon{font-size:22px;margin-bottom:6px;}
+.innov-title{font-family:var(--f-display);font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.innov-desc{font-size:13px;color:var(--ink3);line-height:1.5;}
+
+/* Diff pills */
+.diff-filter{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.dfilter-btn{font-family:var(--f-mono);font-size:12px;padding:4px 14px;border:1.5px solid var(--ink3);background:transparent;color:var(--ink3);cursor:pointer;border-radius:1px 4px 2px 3px;font-weight:500;transition:all .15s;}
+.dfilter-btn:hover{background:var(--paper2);}
+.dfilter-btn.af{border-color:var(--ink);color:var(--ink);background:var(--paper2);}
+.dfilter-btn.ae{border-color:var(--green);color:var(--green);background:rgba(45,106,45,.08);}
+.dfilter-btn.am{border-color:var(--amber);color:var(--amber);background:rgba(184,114,10,.08);}
+.dfilter-btn.ah{border-color:var(--red);color:var(--red);background:rgba(192,57,43,.08);}
+
+/* Task grid */
+.tasks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:32px;}
+.task-card{padding:16px;background:var(--paper2);position:relative;cursor:pointer;transition:transform .1s,box-shadow .1s;}
+.task-card:hover{transform:translate(-1px,-1px);}
+.task-card.selected{outline:2px solid var(--blue);outline-offset:2px;}
+.tc-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.diff-pill{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:2px 9px;border:1.5px solid;border-radius:1px 4px 2px 3px;font-weight:500;}
 .pill-easy{color:var(--green);border-color:var(--green);background:rgba(45,106,45,.08);}
 .pill-medium{color:var(--amber);border-color:var(--amber);background:rgba(184,114,10,.08);}
 .pill-hard{color:var(--red);border-color:var(--red);background:rgba(192,57,43,.08);}
-.task-title{font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;}
-.task-desc{font-family:var(--f-body);font-size:15px;color:var(--ink3);line-height:1.6;margin-bottom:14px;}
+.cat-pill{display:inline-block;font-family:var(--f-mono);font-size:10px;padding:1px 7px;border:1px solid var(--blue);color:var(--blue);border-radius:2px;background:rgba(26,63,107,.06);}
+.task-id{font-family:var(--f-mono);font-size:11px;color:var(--ink3);margin-bottom:2px;}
+.task-desc{font-size:13px;color:var(--ink3);line-height:1.5;margin-bottom:10px;}
 .score-row{display:flex;align-items:center;gap:10px;}
-.score-track{flex:1;height:4px;background:var(--paper3);border:1px solid var(--ink3);border-radius:0;}
+.score-track{flex:1;height:4px;background:var(--paper3);border:1px solid var(--ink3);}
 .score-fill{height:100%;width:0%;transition:width .8s;}
 .fill-easy{background:var(--green);}
 .fill-medium{background:var(--amber);}
 .fill-hard{background:var(--red);}
-.score-num{font-family:var(--f-mono);font-size:15px;color:var(--ink3);min-width:32px;text-align:right;}
+.score-num{font-family:var(--f-mono);font-size:14px;color:var(--ink3);min-width:32px;text-align:right;}
+.tape{position:absolute;width:36px;height:13px;background:rgba(184,114,10,.22);border:1px solid rgba(184,114,10,.4);transform:rotate(-2deg);top:-6px;left:14px;}
 
-/* ── Two col ── */
+/* Two-col */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;}
-@media(max-width:640px){.two-col{grid-template-columns:1fr;}}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
 .panel-head{padding:10px 16px;border-bottom:2px solid var(--ink2);display:flex;align-items:center;justify-content:space-between;background:var(--paper3);}
-.panel-title{font-family:var(--f-display);font-size:17px;font-weight:700;color:var(--ink2);}
+.panel-title{font-family:var(--f-display);font-size:16px;font-weight:700;color:var(--ink2);}
 .panel-body{padding:16px;}
-.ep-list{display:flex;flex-direction:column;gap:8px;}
-.ep-row{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:14px;}
-.method{font-size:11px;padding:1px 6px;border:1.5px solid;border-radius:1px;font-family:var(--f-mono);font-weight:500;}
+.ep-list{display:flex;flex-direction:column;gap:7px;}
+.ep-row{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:13px;}
+.method{font-size:10px;padding:1px 5px;border:1.5px solid;font-family:var(--f-mono);font-weight:500;}
 .m-get{color:var(--blue);border-color:var(--blue);}
 .m-post{color:var(--green);border-color:var(--green);}
-.ep-path{color:var(--ink);}
-.ep-note{color:var(--ink3);margin-left:auto;font-family:var(--f-body);font-size:14px;}
-.rw-list{display:flex;flex-direction:column;gap:10px;}
+.ep-note{color:var(--ink3);margin-left:auto;font-size:13px;font-family:var(--f-body);}
+.rw-list{display:flex;flex-direction:column;gap:9px;}
 .rw-row{display:flex;align-items:center;gap:10px;}
-.rw-pts{font-family:var(--f-mono);font-size:15px;color:var(--blue);min-width:44px;text-align:right;font-weight:500;}
-.rw-pts.neg{color:var(--red);}
+.rw-pts{font-family:var(--f-mono);font-size:14px;font-weight:500;min-width:52px;text-align:right;}
+.rw-pos{color:var(--blue);}
+.rw-neg{color:var(--red);}
 .rw-track{flex:1;height:3px;background:var(--paper3);border:1px solid var(--ink3);}
-.rw-fill{height:100%;background:var(--blue);}
-.rw-fill.neg{background:var(--red);}
-.rw-desc{font-family:var(--f-body);font-size:15px;color:var(--ink);}
+.rw-fill-pos{height:100%;background:var(--blue);}
+.rw-fill-neg{height:100%;background:var(--red);}
+.rw-desc{font-size:14px;color:var(--ink);}
 
-/* ── Schema ── */
-.schema{font-family:var(--f-mono);font-size:14px;line-height:2.1;background:var(--paper3);border:2px solid var(--ink2);padding:16px 20px;margin-bottom:28px;overflow-x:auto;border-radius:2px 6px 3px 5px/5px 2px 6px 3px;box-shadow:3px 3px 0 var(--ink3);}
-.schema .kw{color:var(--blue);}
+/* Schema */
+.schema{font-family:var(--f-mono);font-size:13px;line-height:2;background:var(--paper3);border:2px solid var(--ink2);padding:18px 22px;margin-bottom:28px;overflow-x:auto;box-shadow:3px 3px 0 var(--ink3);}
+.schema .kw{color:var(--blue);font-weight:500;}
 .schema .tbl{color:var(--ink);font-weight:700;}
 .schema .col{color:var(--ink3);}
-.schema .rel{color:var(--green);font-size:13px;}
+.schema .rel{color:var(--green);font-size:12px;}
 
-/* ── Grader ── */
-.grader-head{padding:12px 18px;border-bottom:2px solid var(--ink2);display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper3);}
-.grader-title{font-family:var(--f-body);font-size:15px;font-weight:500;color:var(--ink2);}
+/* Grader sandbox */
+.grader-head{padding:12px 18px;border-bottom:2px solid var(--ink2);display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;background:var(--paper3);}
+.grader-title{font-size:15px;font-weight:500;color:var(--ink2);}
+.task-select{font-family:var(--f-mono);font-size:13px;padding:6px 12px;border:2px solid var(--ink2);background:var(--paper);color:var(--ink);cursor:pointer;border-radius:2px;outline:none;min-width:200px;}
 .grader-body{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-@media(max-width:640px){.grader-body{grid-template-columns:1fr;}}
-.sub-label{font-family:var(--f-mono);font-size:12px;color:var(--ink3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;font-weight:500;}
-.broken-box{font-family:var(--f-mono);font-size:13px;line-height:1.8;background:rgba(192,57,43,.06);border:1.5px solid var(--red);padding:12px 14px;color:var(--red);min-height:100px;white-space:pre-wrap;border-radius:2px;}
-.fix-area{width:100%;font-family:var(--f-mono);font-size:13px;line-height:1.8;background:rgba(26,63,107,.05);border:2px solid var(--ink2);padding:12px 14px;color:var(--ink);resize:vertical;min-height:120px;outline:none;border-radius:2px;transition:border-color .15s;}
+@media(max-width:700px){.grader-body{grid-template-columns:1fr;}}
+.sub-label{font-family:var(--f-mono);font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;font-weight:500;}
+.broken-box{font-family:var(--f-mono);font-size:12px;line-height:1.8;background:rgba(192,57,43,.05);border:1.5px solid var(--red);padding:12px 14px;color:var(--red);min-height:90px;white-space:pre-wrap;}
+.fix-area{width:100%;font-family:var(--f-mono);font-size:12px;line-height:1.8;background:rgba(26,63,107,.04);border:2px solid var(--ink2);padding:12px 14px;color:var(--ink);resize:vertical;min-height:120px;outline:none;transition:border-color .15s;}
 .fix-area:focus{border-color:var(--blue);}
-.grader-footer{padding:12px 18px;border-top:2px solid var(--ink2);display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper3);}
-.btn-primary{font-family:var(--f-body);font-size:15px;font-weight:600;padding:7px 22px;background:var(--ink);color:var(--paper);border:2px solid var(--ink);cursor:pointer;border-radius:1px 4px 2px 3px;transition:all .15s;box-shadow:2px 2px 0 var(--ink3);}
-.btn-primary:hover{background:var(--ink2);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink3);}
-.btn-primary:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink3);}
-.btn-secondary{font-family:var(--f-body);font-size:14px;font-weight:500;padding:7px 16px;background:transparent;color:var(--ink3);border:1.5px dashed var(--ink3);cursor:pointer;border-radius:1px 4px 2px 3px;transition:background .15s;}
-.btn-secondary:hover{background:var(--paper2);}
-.task-tabs{display:flex;gap:6px;}
-.ttab{font-family:var(--f-mono);font-size:13px;padding:4px 16px;border:1.5px solid var(--ink3);background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s;border-radius:1px 4px 2px 3px;font-weight:500;}
-.ttab.active.easy{border-color:var(--green);color:var(--green);background:rgba(45,106,45,.08);}
-.ttab.active.medium{border-color:var(--amber);color:var(--amber);background:rgba(184,114,10,.08);}
-.ttab.active.hard{border-color:var(--red);color:var(--red);background:rgba(192,57,43,.08);}
-.ttab:hover:not(.active){background:var(--paper2);}
-.result-banner{display:none;margin:12px 18px;padding:12px 14px;font-family:var(--f-body);font-size:15px;line-height:1.5;border:2px solid;border-radius:2px;border-left-width:4px;}
+.grader-footer{padding:10px 18px;border-top:2px solid var(--ink2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper3);}
+.result-banner{display:none;margin:12px 18px;padding:12px 14px;font-size:14px;line-height:1.6;border:2px solid;border-left-width:4px;}
 .result-banner.show{display:block;}
-.result-banner.ok{background:rgba(45,106,45,.08);color:var(--green);border-color:var(--green);}
-.result-banner.partial{background:rgba(184,114,10,.08);color:var(--amber);border-color:var(--amber);}
-.result-banner.fail{background:rgba(192,57,43,.08);color:var(--red);border-color:var(--red);}
-.result-score{font-family:var(--f-mono);font-size:18px;font-weight:500;margin-bottom:2px;}
+.result-banner.ok{background:rgba(45,106,45,.07);color:var(--green);border-color:var(--green);}
+.result-banner.partial{background:rgba(184,114,10,.07);color:var(--amber);border-color:var(--amber);}
+.result-banner.fail{background:rgba(192,57,43,.07);color:var(--red);border-color:var(--red);}
+.result-score{font-family:var(--f-mono);font-size:17px;font-weight:500;margin-bottom:4px;}
+.result-diff{font-family:var(--f-mono);font-size:12px;margin-top:6px;opacity:.85;}
+.hint-box{margin-top:8px;font-size:13px;color:var(--ink3);font-style:italic;border-left:3px solid var(--amber);padding-left:10px;}
 
-/* ── Baseline ── */
-.baseline-head{padding:12px 18px;border-bottom:2px solid var(--ink2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--paper3);}
-.baseline-results{padding:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
-.br-card{background:var(--paper3);border:1.5px solid var(--ink3);padding:14px;border-radius:2px 5px 3px 4px;position:relative;}
-.br-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.br-score{font-family:var(--f-display);font-size:42px;font-weight:900;line-height:1;}
-.br-feedback{font-family:var(--f-body);font-size:14px;color:var(--ink3);line-height:1.5;}
+/* Buttons */
+.btn{font-size:14px;font-weight:600;padding:7px 20px;border:2px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;transition:all .15s;box-shadow:2px 2px 0 var(--ink3);}
+.btn:hover{background:var(--ink2);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink3);}
+.btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink3);}
+.btn-sec{font-size:13px;font-weight:500;padding:7px 14px;background:transparent;color:var(--ink3);border:1.5px dashed var(--ink3);cursor:pointer;transition:background .15s;}
+.btn-sec:hover{background:var(--paper2);}
 .spin{display:none;width:14px;height:14px;border:2px solid var(--ink3);border-top-color:var(--ink);border-radius:50%;animation:spin .6s linear infinite;}
 .spin.show{display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.grade-status{font-family:var(--f-body);font-size:14px;color:var(--ink3);}
-.hint-display{margin-top:8px;font-family:var(--f-body);font-size:14px;color:var(--ink3);}
+.status-txt{font-size:13px;color:var(--ink3);}
 
-/* tape corners */
-.tape{position:absolute;width:36px;height:14px;background:rgba(184,114,10,.25);border:1px solid rgba(184,114,10,.4);transform:rotate(-2deg);top:-7px;left:16px;}
-.tape2{position:absolute;width:28px;height:12px;background:rgba(184,114,10,.2);border:1px solid rgba(184,114,10,.3);transform:rotate(1.5deg);top:-6px;right:20px;}
+/* Baseline */
+.baseline-head{padding:12px 18px;border-bottom:2px solid var(--ink2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--paper3);}
+.baseline-grid{padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.br-card{background:var(--paper3);border:1.5px solid var(--ink3);padding:12px;}
+.br-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.br-score{font-family:var(--f-display);font-size:34px;font-weight:900;line-height:1;margin:6px 0;}
+.br-bar{height:3px;background:var(--paper);border:1px solid var(--ink3);margin-bottom:8px;}
+.br-fill{height:100%;transition:width .8s;}
+.br-feedback{font-size:11px;color:var(--ink3);line-height:1.4;}
+.baseline-summary{padding:0 18px 14px;font-size:13px;color:var(--ink3);font-family:var(--f-mono);}
 
-.footer{border-top:3px solid var(--ink2);padding:22px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:32px;}
-.footer-l{font-family:var(--f-body);font-size:14px;color:var(--ink3);}
-.footer-links{display:flex;gap:18px;}
-.footer-links a{font-family:var(--f-mono);font-size:13px;color:var(--ink3);text-decoration:none;border-bottom:1px dashed var(--ink3);}
+/* Footer */
+.footer{border-top:3px solid var(--ink2);padding:22px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:40px;}
+.footer-l{font-size:13px;color:var(--ink3);}
+.footer-links{display:flex;gap:16px;}
+.footer-links a{font-family:var(--f-mono);font-size:12px;color:var(--ink3);text-decoration:none;border-bottom:1px dashed var(--ink3);}
 .footer-links a:hover{color:var(--ink);}
+.loading-ph{font-size:14px;color:var(--ink3);padding:20px 0;text-align:center;}
 </style>
-
+</head>
+<body>
 <div class="shell">
+
+  <!-- Header -->
   <header class="header">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
       <div>
-        <div class="env-tag"><span class="dot"></span> running · openenv</div>
+        <div class="env-tag"><span class="dot"></span> running &nbsp;·&nbsp; openenv &nbsp;·&nbsp; v4.0.0</div>
         <h1>SQL <em>Repair</em><br>Environment</h1>
-        <p class="tagline">An AI agent training env where agents diagnose &amp; fix broken SQL queries against a live SQLite database.</p>
+        <p class="tagline">A production-grade RL environment where AI agents diagnose and fix broken SQL queries through multi-turn agentic interaction with a live database. 20 tasks · 7 tables · Diagnostic mode · Execution diffs.</p>
       </div>
-      <div style="text-align:right;">
-        <div class="version-badge">v1.0.0 · sql_repair_env</div>
+      <div style="text-align:right;padding-top:4px;">
+        <div class="version-badge">v4.0.0 · sql_repair_env</div>
       </div>
     </div>
   </header>
 
+  <!-- Stats -->
   <div class="stats">
-    <div class="box stat"><div class="stat-label">Tasks</div><div class="stat-value">3</div><div class="stat-sub">easy → hard</div></div>
-    <div class="box stat"><div class="stat-label">Max attempts</div><div class="stat-value">5</div><div class="stat-sub">per episode</div></div>
-    <div class="box stat"><div class="stat-label">Reward range</div><div class="stat-value">0–1</div><div class="stat-sub">partial credit</div></div>
-    <div class="box stat"><div class="stat-label">DB tables</div><div class="stat-value">4</div><div class="stat-sub">SQLite in-memory</div></div>
-    <div class="box stat"><div class="stat-label">Framework</div><div class="stat-value" style="font-size:22px;margin-top:4px;">FastAPI</div><div class="stat-sub">+ OpenEnv core</div></div>
+    <div class="box stat"><div class="stat-label">Tasks</div><div class="stat-value">20</div><div class="stat-sub">3 difficulty tiers</div></div>
+    <div class="box stat"><div class="stat-label">DB Tables</div><div class="stat-value">7</div><div class="stat-sub">SQLite in-memory</div></div>
+    <div class="box stat"><div class="stat-label">Bug Categories</div><div class="stat-value">8</div><div class="stat-sub">syntax → semantic</div></div>
+    <div class="box stat"><div class="stat-label">Max Attempts</div><div class="stat-value">5</div><div class="stat-sub">+ free diagnostics</div></div>
+    <div class="box stat"><div class="stat-label">Reward Range</div><div class="stat-value" style="font-size:28px;margin-top:8px;">0–1</div><div class="stat-sub">partial credit</div></div>
   </div>
 
-  <div class="sec-head"><span class="sec-label">✎ Tasks</span><div class="sec-line"></div><div class="sec-sq"></div></div>
-  <div class="tasks">
-    <div class="box task-card" style="position:relative;"><div class="tape"></div>
-      <div class="diff-pill pill-easy">easy</div>
-      <div class="task-title">Syntax repair</div>
-      <div class="task-desc">Fix misspelled SQL keywords — SELECT, FROM, WHERE, ORDER BY, DESC — in a simple single-table query.</div>
-      <div class="score-row"><div class="score-track"><div class="score-fill fill-easy" id="fill-easy"></div></div><span class="score-num" id="snum-easy">—</span></div>
+  <!-- Innovations -->
+  <div class="sec"><span class="sec-label">✎ What makes this environment exceptional</span><div class="sec-line"></div><div class="sec-sq"></div></div>
+  <div class="innovations">
+    <div class="innov-card">
+      <div class="innov-icon">🔍</div>
+      <div class="innov-title">Diagnostic Mode</div>
+      <div class="innov-desc">Agents run free exploratory SQL queries to understand the database before fixing — genuine multi-turn agentic behaviour. No other SQL environment supports this.</div>
     </div>
-    <div class="box task-card" style="position:relative;"><div class="tape2"></div>
-      <div class="diff-pill pill-medium">medium</div>
-      <div class="task-title">JOIN correction</div>
-      <div class="task-desc">Fix wrong column references in a multi-table JOIN across employees, departments and projects.</div>
-      <div class="score-row"><div class="score-track"><div class="score-fill fill-medium" id="fill-medium"></div></div><span class="score-num" id="snum-medium">—</span></div>
+    <div class="innov-card">
+      <div class="innov-icon">📊</div>
+      <div class="innov-title">Execution Diffs</div>
+      <div class="innov-desc">Every step shows the agent exactly what its query returned vs what was expected. Row-level diffs make errors transparent and learnable.</div>
     </div>
-    <div class="box task-card" style="position:relative;"><div class="tape"></div>
-      <div class="diff-pill pill-hard">hard</div>
-      <div class="task-title">Aggregation logic</div>
-      <div class="task-desc">Replace an incorrect WHERE clause with a proper HAVING clause for aggregated salary filtering.</div>
-      <div class="score-row"><div class="score-track"><div class="score-fill fill-hard" id="fill-hard"></div></div><span class="score-num" id="snum-hard">—</span></div>
+    <div class="innov-card">
+      <div class="innov-icon">📈</div>
+      <div class="innov-title">Progress Rewards</div>
+      <div class="innov-desc">A bonus reward is added whenever the agent improves from its previous best score. Prevents reward flattening and encourages convergent behaviour.</div>
+    </div>
+    <div class="innov-card">
+      <div class="innov-icon">🏷️</div>
+      <div class="innov-title">Bug Categories</div>
+      <div class="innov-desc">8 structured bug categories enable curriculum learning — train on syntax first, then JOIN logic, then hard semantic bugs like self-joins and duplicate counting.</div>
+    </div>
+    <div class="innov-card">
+      <div class="innov-icon">🛡️</div>
+      <div class="innov-title">Anti-Hack Grader</div>
+      <div class="innov-desc">Penalises submitting the original broken query unchanged or exact duplicate submissions. Forces agents to genuinely reason rather than exploit the reward.</div>
     </div>
   </div>
 
-  <div class="sec-head"><span class="sec-label">✎ API + Reward</span><div class="sec-line"></div><div class="sec-sq"></div></div>
+  <!-- Tasks -->
+  <div class="sec"><span class="sec-label">✎ Tasks</span><div class="sec-line"></div><div class="sec-sq"></div></div>
+  <div class="diff-filter">
+    <button class="dfilter-btn af" onclick="filterTasks('all',this)">all (20)</button>
+    <button class="dfilter-btn" onclick="filterTasks('easy',this)">easy (7)</button>
+    <button class="dfilter-btn" onclick="filterTasks('medium',this)">medium (7)</button>
+    <button class="dfilter-btn" onclick="filterTasks('hard',this)">hard (6)</button>
+  </div>
+  <div class="tasks-grid" id="tasks-grid"><div class="loading-ph">Loading tasks…</div></div>
+
+  <!-- API + Reward -->
+  <div class="sec"><span class="sec-label">✎ API + Reward function</span><div class="sec-line"></div><div class="sec-sq"></div></div>
   <div class="two-col">
     <div class="box" style="overflow:hidden;">
-      <div class="panel-head"><span class="panel-title">API Endpoints</span><span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--ink3);">port 7860</span></div>
+      <div class="panel-head"><span class="panel-title">API Endpoints</span><span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--ink3);">port 7860</span></div>
       <div class="panel-body">
         <div class="ep-list">
-          <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/health</span><span class="ep-note">ping</span></div>
-          <div class="ep-row"><span class="method m-post">POST</span><span class="ep-path">/reset</span><span class="ep-note">new episode</span></div>
-          <div class="ep-row"><span class="method m-post">POST</span><span class="ep-path">/step</span><span class="ep-note">submit query</span></div>
-          <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/state</span><span class="ep-note">episode meta</span></div>
-          <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/tasks</span><span class="ep-note">list tasks</span></div>
-          <div class="ep-row"><span class="method m-post">POST</span><span class="ep-path">/grader</span><span class="ep-note">grade query</span></div>
-          <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/baseline</span><span class="ep-note">oracle scores</span></div>
-          <div class="ep-row"><span class="method m-get">GET</span><span class="ep-path">/docs</span><span class="ep-note">swagger ui</span></div>
+          <div class="ep-row"><span class="method m-get">GET</span><span style="font-family:'DM Mono',monospace;">/health</span><span class="ep-note">health check</span></div>
+          <div class="ep-row"><span class="method m-post">POST</span><span style="font-family:'DM Mono',monospace;">/reset</span><span class="ep-note">start episode</span></div>
+          <div class="ep-row"><span class="method m-post">POST</span><span style="font-family:'DM Mono',monospace;">/step</span><span class="ep-note">submit action</span></div>
+          <div class="ep-row"><span class="method m-get">GET</span><span style="font-family:'DM Mono',monospace;">/state</span><span class="ep-note">episode meta</span></div>
+          <div class="ep-row"><span class="method m-get">GET</span><span style="font-family:'DM Mono',monospace;">/tasks</span><span class="ep-note">list 20 tasks</span></div>
+          <div class="ep-row"><span class="method m-post">POST</span><span style="font-family:'DM Mono',monospace;">/grader</span><span class="ep-note">grade without episode</span></div>
+          <div class="ep-row"><span class="method m-get">GET</span><span style="font-family:'DM Mono',monospace;">/baseline</span><span class="ep-note">oracle scores</span></div>
+          <div class="ep-row"><span class="method m-get">GET</span><span style="font-family:'DM Mono',monospace;">/info</span><span class="ep-note">environment info</span></div>
+          <div class="ep-row"><span class="method m-get">GET</span><span style="font-family:'DM Mono',monospace;">/docs</span><span class="ep-note">swagger UI</span></div>
         </div>
       </div>
     </div>
     <div class="box" style="overflow:hidden;">
-      <div class="panel-head"><span class="panel-title">Reward Shaping</span><span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--ink3);">0.0 – 1.0</span></div>
+      <div class="panel-head"><span class="panel-title">Reward Function</span><span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--ink3);">0.001 – 0.999</span></div>
       <div class="panel-body">
         <div class="rw-list">
-          <div class="rw-row"><span class="rw-pts">+0.30</span><div class="rw-track"><div class="rw-fill" style="width:30%"></div></div><span class="rw-desc">query executes</span></div>
-          <div class="rw-row"><span class="rw-pts">+0.20</span><div class="rw-track"><div class="rw-fill" style="width:20%"></div></div><span class="rw-desc">correct columns</span></div>
-          <div class="rw-row"><span class="rw-pts">+0.10</span><div class="rw-track"><div class="rw-fill" style="width:10%"></div></div><span class="rw-desc">correct row count</span></div>
-          <div class="rw-row"><span class="rw-pts">+0.40</span><div class="rw-track"><div class="rw-fill" style="width:40%"></div></div><span class="rw-desc">all values match</span></div>
-          <div class="rw-row"><span class="rw-pts neg">×0.85</span><div class="rw-track"><div class="rw-fill neg" style="width:15%"></div></div><span class="rw-desc">attempts exhausted</span></div>
+          <div class="rw-row"><span class="rw-pts rw-pos">+0.30</span><div class="rw-track"><div class="rw-fill-pos" style="width:30%"></div></div><span class="rw-desc">query executes without error</span></div>
+          <div class="rw-row"><span class="rw-pts rw-pos">+0.20</span><div class="rw-track"><div class="rw-fill-pos" style="width:20%"></div></div><span class="rw-desc">correct columns returned</span></div>
+          <div class="rw-row"><span class="rw-pts rw-pos">+0.10</span><div class="rw-track"><div class="rw-fill-pos" style="width:10%"></div></div><span class="rw-desc">correct row count</span></div>
+          <div class="rw-row"><span class="rw-pts rw-pos">+0.40</span><div class="rw-track"><div class="rw-fill-pos" style="width:40%"></div></div><span class="rw-desc">all values match exactly</span></div>
+          <div class="rw-row"><span class="rw-pts rw-pos">+bonus</span><div class="rw-track"><div class="rw-fill-pos" style="width:8%"></div></div><span class="rw-desc">progress bonus (score improved)</span></div>
+          <div class="rw-row"><span class="rw-pts rw-neg">×0.85</span><div class="rw-track"><div class="rw-fill-neg" style="width:15%"></div></div><span class="rw-desc">all attempts exhausted</span></div>
+          <div class="rw-row"><span class="rw-pts rw-neg">→0.001</span><div class="rw-track"><div class="rw-fill-neg" style="width:5%"></div></div><span class="rw-desc">unchanged or duplicate query</span></div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="sec-head"><span class="sec-label">✎ Database schema</span><div class="sec-line"></div><div class="sec-sq"></div></div>
+  <!-- Schema -->
+  <div class="sec"><span class="sec-label">✎ Database schema — 7 tables</span><div class="sec-line"></div><div class="sec-sq"></div></div>
   <div class="schema">
-    <span class="kw">TABLE</span> <span class="tbl">employees</span>        (<span class="col">id</span> INTEGER, <span class="col">name</span> TEXT, <span class="col">department</span> TEXT, <span class="col">salary</span> REAL, <span class="col">hire_date</span> TEXT)<br>
-    <span class="kw">TABLE</span> <span class="tbl">departments</span>      (<span class="col">id</span> INTEGER, <span class="col">name</span> TEXT, <span class="col">budget</span> REAL, <span class="col">location</span> TEXT)<br>
-    <span class="kw">TABLE</span> <span class="tbl">projects</span>         (<span class="col">id</span> INTEGER, <span class="col">name</span> TEXT, <span class="col">department_id</span> INTEGER, <span class="col">budget</span> REAL, <span class="col">status</span> TEXT)<br>
-    <span class="kw">TABLE</span> <span class="tbl">employee_projects</span> (<span class="col">employee_id</span> INTEGER, <span class="col">project_id</span> INTEGER, <span class="col">role</span> TEXT, <span class="col">hours_worked</span> REAL)<br><br>
-    <span class="rel">→  employees.department   =  departments.name</span><br>
-    <span class="rel">→  projects.department_id  →  departments.id</span><br>
-    <span class="rel">→  employee_projects.*     →  employees.id / projects.id</span>
+<span class="kw">TABLE</span> <span class="tbl">employees</span>           (<span class="col">id</span>, <span class="col">name</span>, <span class="col">department</span>, <span class="col">salary</span>, <span class="col">hire_date</span>, <span class="col">manager_id</span>, <span class="col">status</span>)<br>
+<span class="kw">TABLE</span> <span class="tbl">departments</span>         (<span class="col">id</span>, <span class="col">name</span>, <span class="col">budget</span>, <span class="col">location</span>, <span class="col">head_id</span>)<br>
+<span class="kw">TABLE</span> <span class="tbl">projects</span>            (<span class="col">id</span>, <span class="col">name</span>, <span class="col">department_id</span>, <span class="col">budget</span>, <span class="col">status</span>, <span class="col">start_date</span>, <span class="col">end_date</span>, <span class="col">priority</span>)<br>
+<span class="kw">TABLE</span> <span class="tbl">employee_projects</span>   (<span class="col">employee_id</span>, <span class="col">project_id</span>, <span class="col">role</span>, <span class="col">hours_worked</span>, <span class="col">start_date</span>)<br>
+<span class="kw">TABLE</span> <span class="tbl">sales</span>               (<span class="col">id</span>, <span class="col">employee_id</span>, <span class="col">amount</span>, <span class="col">sale_date</span>, <span class="col">product</span>, <span class="col">region</span>, <span class="col">quarter</span>)<br>
+<span class="kw">TABLE</span> <span class="tbl">products</span>            (<span class="col">id</span>, <span class="col">name</span>, <span class="col">category</span>, <span class="col">price</span>, <span class="col">stock</span>, <span class="col">supplier</span>)<br>
+<span class="kw">TABLE</span> <span class="tbl">performance_reviews</span> (<span class="col">id</span>, <span class="col">employee_id</span>, <span class="col">year</span>, <span class="col">rating</span>, <span class="col">reviewer_id</span>, <span class="col">notes</span>)<br>
+<br>
+<span class="rel">→  employees.department           =  departments.name</span><br>
+<span class="rel">→  employees.manager_id           →  employees.id              (self-join)</span><br>
+<span class="rel">→  departments.head_id            →  employees.id</span><br>
+<span class="rel">→  projects.department_id         →  departments.id</span><br>
+<span class="rel">→  employee_projects.employee_id  →  employees.id</span><br>
+<span class="rel">→  employee_projects.project_id   →  projects.id</span><br>
+<span class="rel">→  sales.employee_id              →  employees.id</span><br>
+<span class="rel">→  performance_reviews.employee_id / reviewer_id  →  employees.id</span>
   </div>
 
-  <div class="sec-head"><span class="sec-label">✎ Grader sandbox</span><div class="sec-line"></div><div class="sec-sq"></div></div>
+  <!-- Grader -->
+  <div class="sec"><span class="sec-label">✎ Grader sandbox</span><div class="sec-line"></div><div class="sec-sq"></div></div>
   <div class="box" style="overflow:hidden;margin-bottom:28px;">
     <div class="grader-head">
-      <span class="grader-title">try the grader — instant score without an episode</span>
-      <div class="task-tabs">
-        <button class="ttab active easy" onclick="setTask('easy',this)">easy</button>
-        <button class="ttab" onclick="setTask('medium',this)">medium</button>
-        <button class="ttab" onclick="setTask('hard',this)">hard</button>
-      </div>
+      <span class="grader-title">try the grader — instant score + diff without an episode</span>
+      <select class="task-select" id="task-select" onchange="onTaskSelect()">
+        <option value="">— select a task —</option>
+      </select>
     </div>
     <div class="grader-body">
       <div>
         <div class="sub-label">Broken query</div>
-        <div class="broken-box" id="broken-display">Click a task tab to load the broken query.</div>
-        <div class="hint-display" id="hint-display"></div>
+        <div class="broken-box" id="broken-display">Select a task above to load the broken query.</div>
+        <div class="hint-box" id="hint-box" style="display:none;"></div>
       </div>
       <div>
         <div class="sub-label">Your fixed SQL</div>
-        <textarea class="fix-area" id="fix-input" placeholder="Write your fixed query here…"></textarea>
+        <textarea class="fix-area" id="fix-input" placeholder="Write your fixed SQL here, or click 'copy broken' to start from the broken query…"></textarea>
       </div>
     </div>
     <div class="result-banner" id="result-banner">
       <div class="result-score" id="result-score"></div>
       <div id="result-feedback"></div>
+      <div class="result-diff" id="result-diff"></div>
     </div>
     <div class="grader-footer">
-      <button class="btn-primary" onclick="gradeQuery()">▶ Grade query</button>
-      <button class="btn-secondary" onclick="copyBroken()">↙ copy broken → fix box</button>
+      <button class="btn" onclick="gradeQuery()">▶ Grade query</button>
+      <button class="btn-sec" onclick="copyBroken()">↙ copy broken</button>
       <div class="spin" id="grade-spin"></div>
-      <span class="grade-status" id="grade-status"></span>
+      <span class="status-txt" id="grade-status"></span>
     </div>
   </div>
 
-  <div class="sec-head"><span class="sec-label">✎ Baseline oracle</span><div class="sec-line"></div><div class="sec-sq"></div></div>
+  <!-- Baseline -->
+  <div class="sec"><span class="sec-label">✎ Baseline oracle — all 20 tasks</span><div class="sec-line"></div><div class="sec-sq"></div></div>
   <div class="box" style="overflow:hidden;margin-bottom:28px;">
     <div class="baseline-head">
-      <span class="grader-title">oracle agent — submits the known-correct query for all tasks</span>
+      <span class="grader-title">oracle agent submits the known-correct query for all 20 tasks</span>
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="spin" id="baseline-spin"></div>
-        <button class="btn-primary" onclick="runBaseline()">▶ Run baseline</button>
+        <button class="btn" onclick="runBaseline()">▶ Run baseline</button>
       </div>
     </div>
-    <div class="baseline-results" id="baseline-results">
-      <div style="grid-column:1/-1;font-family:'Inter',sans-serif;font-size:15px;color:var(--ink3);padding:8px 0;">Click "Run baseline" to fetch oracle scores.</div>
+    <div class="baseline-grid" id="baseline-grid">
+      <div style="grid-column:1/-1;" class="loading-ph">Click "Run baseline" to fetch oracle scores for all 20 tasks.</div>
     </div>
-    <div style="padding:0 18px 14px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink3);" id="baseline-avg"></div>
+    <div class="baseline-summary" id="baseline-summary"></div>
   </div>
 
   <footer class="footer">
-    <div class="footer-l">SQL Repair Environment · OpenEnv v1.0.0 · FastAPI</div>
+    <div class="footer-l">SQL Repair Environment v4.0.0 &nbsp;·&nbsp; OpenEnv &nbsp;·&nbsp; 20 tasks &nbsp;·&nbsp; 7 tables &nbsp;·&nbsp; FastAPI</div>
     <div class="footer-links">
       <a href="/docs">Swagger UI</a>
       <a href="/tasks">Tasks JSON</a>
-      <a href="/health">Health</a>
       <a href="/baseline">Baseline JSON</a>
+      <a href="/info">Info JSON</a>
+      <a href="/health">Health</a>
     </div>
   </footer>
 </div>
 
 <script>
-const BROKEN={
-  easy:`SELCT name, department, salary\nFORM employees\nWERE department = 'Engineering' AND salary > 80000\nORDER BY salary DESK;`,
-  medium:`SELECT e.name, d.name AS department, p.name AS project\nFROM employees e\nJOIN departments d ON e.id = d.id\nJOIN employee_projects ep ON e.id = ep.employee_id\nJOIN projects p ON ep.project_id = p.id\nWHERE p.status = 'active';`,
-  hard:`SELECT department, AVG(salary) AS avg_salary\nFROM employees\nWHERE AVG(salary) > 85000\nGROUP BY department;`
-};
-const HINTS={
-  easy:'💡 Check keyword spelling — SELECT, FROM, WHERE, ORDER BY, DESC',
-  medium:'💡 The JOIN condition should use employees.department = departments.name',
-  hard:'💡 Aggregate functions cannot appear in WHERE — use HAVING'
-};
-const DIFF_COLORS={easy:'easy',medium:'medium',hard:'hard'};
-let currentTask='easy';
+let allTasks   = [];
+let selectedId = '';
+let scoreCache = {};
 
-function setTask(t,el){
-  currentTask=t;
-  document.querySelectorAll('.ttab').forEach(b=>{b.classList.remove('active','easy','medium','hard');});
-  el.classList.add('active',t);
-  document.getElementById('broken-display').textContent=BROKEN[t];
-  document.getElementById('hint-display').textContent=HINTS[t];
-  document.getElementById('result-banner').className='result-banner';
-  document.getElementById('grade-status').textContent='';
+// ── Load tasks ────────────────────────────────────────────────────────────────
+async function loadTasks() {
+  try {
+    const data = await fetch('/tasks').then(r => r.json());
+    allTasks   = data.tasks || [];
+    renderGrid(allTasks);
+    populateSelect(allTasks);
+  } catch(e) {
+    document.getElementById('tasks-grid').innerHTML =
+      `<div class="loading-ph" style="color:var(--red)">Failed to load tasks: ${e.message}</div>`;
+  }
 }
 
-function copyBroken(){document.getElementById('fix-input').value=BROKEN[currentTask];}
+function diffColor(d) { return d==='easy'?'var(--green)':d==='medium'?'var(--amber)':'var(--red)'; }
+function pillCls(d)   { return `pill-${d}`; }
+function fillCls(d)   { return `fill-${d}`; }
 
-async function gradeQuery(){
-  const sql=document.getElementById('fix-input').value.trim();
-  if(!sql){alert('Enter a SQL query first.');return;}
-  const spin=document.getElementById('grade-spin');
-  const status=document.getElementById('grade-status');
-  const banner=document.getElementById('result-banner');
-  spin.classList.add('show');
-  banner.className='result-banner';
-  status.textContent='Grading…';
-  try{
-    const params=new URLSearchParams({task_id:currentTask,sql_query:sql});
-    const res=await fetch(`/grader?${params}`,{method:'POST'});
-    const data=await res.json();
-    const score=data.score??0;
-    const passed=data.passed??false;
-    document.getElementById('result-score').textContent=(passed?'✓ Passed · ':score>0?'~ Partial · ':'✗ Failed · ')+`score = ${score.toFixed(2)}`;
-    document.getElementById('result-feedback').textContent=data.feedback??'';
-    banner.className='result-banner show '+(passed?'ok':score>0?'partial':'fail');
-    status.textContent='';
-    const fill=document.getElementById('fill-'+currentTask);
-    const num=document.getElementById('snum-'+currentTask);
-    if(fill)fill.style.width=(score*100)+'%';
-    if(num)num.textContent=score.toFixed(2);
-  }catch(e){status.textContent='Error: '+e.message;}
-  finally{spin.classList.remove('show');}
+function renderGrid(tasks) {
+  const grid = document.getElementById('tasks-grid');
+  if (!tasks.length) { grid.innerHTML = '<div class="loading-ph">No tasks.</div>'; return; }
+  grid.innerHTML = tasks.map(t => {
+    const cached = scoreCache[t.task_id];
+    const sw = cached ? (cached * 100) + '%' : '0%';
+    const sn = cached ? cached.toFixed(2) : '—';
+    return `
+    <div class="box task-card" id="card-${t.task_id}" onclick="selectCard('${t.task_id}')">
+      <div class="tape"></div>
+      <div class="tc-top">
+        <span class="diff-pill ${pillCls(t.difficulty)}">${t.difficulty}</span>
+        <span class="cat-pill">${t.bug_category||''}</span>
+      </div>
+      <div class="task-id">${t.task_id}</div>
+      <div class="task-desc">${t.description}</div>
+      <div class="score-row">
+        <div class="score-track"><div class="score-fill ${fillCls(t.difficulty)}" id="fill-${t.task_id}" style="width:${sw}"></div></div>
+        <span class="score-num" id="snum-${t.task_id}">${sn}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-async function runBaseline(){
-  const spin=document.getElementById('baseline-spin');
-  const container=document.getElementById('baseline-results');
-  const avgEl=document.getElementById('baseline-avg');
+function populateSelect(tasks) {
+  const sel = document.getElementById('task-select');
+  sel.innerHTML = '<option value="">— select a task —</option>' +
+    tasks.map(t => `<option value="${t.task_id}">[${t.difficulty}] ${t.task_id} — ${t.bug_category||''}</option>`).join('');
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+function filterTasks(diff, el) {
+  document.querySelectorAll('.dfilter-btn').forEach(b => b.className = 'dfilter-btn');
+  el.classList.add(diff==='all'?'af':diff==='easy'?'ae':diff==='medium'?'am':'ah');
+  renderGrid(diff === 'all' ? allTasks : allTasks.filter(t => t.difficulty === diff));
+}
+
+// ── Select task ───────────────────────────────────────────────────────────────
+function selectCard(id) {
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('card-' + id);
+  if (card) { card.classList.add('selected'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+
+  document.getElementById('task-select').value = id;
+  selectedId = id;
+
+  const task = allTasks.find(t => t.task_id === id);
+  if (task) {
+    document.getElementById('broken-display').textContent = task.broken_query || '';
+    const hb = document.getElementById('hint-box');
+    hb.style.display = 'none';
+    document.getElementById('result-banner').className = 'result-banner';
+    document.getElementById('grade-status').textContent = '';
+    document.querySelector('.grader-head').scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+}
+
+function onTaskSelect() {
+  const id = document.getElementById('task-select').value;
+  if (id) selectCard(id);
+}
+
+function copyBroken() {
+  document.getElementById('fix-input').value =
+    document.getElementById('broken-display').textContent;
+}
+
+// ── Grade ─────────────────────────────────────────────────────────────────────
+async function gradeQuery() {
+  const sql    = document.getElementById('fix-input').value.trim();
+  const taskId = selectedId || document.getElementById('task-select').value;
+  if (!sql)    { alert('Enter a SQL query first.');  return; }
+  if (!taskId) { alert('Select a task first.');      return; }
+
+  const spin   = document.getElementById('grade-spin');
+  const status = document.getElementById('grade-status');
+  const banner = document.getElementById('result-banner');
+
   spin.classList.add('show');
-  container.innerHTML='<div style="font-family:\'Inter\',sans-serif;font-size:15px;color:var(--ink3);padding:8px 0;grid-column:1/-1;">Running oracle…</div>';
-  avgEl.textContent='';
-  try{
-    const res=await fetch('/baseline');
-    const data=await res.json();
-    const results=data.results??{};
-    const avg=data.average_score??0;
-    const colors={easy:'var(--green)',medium:'var(--amber)',hard:'var(--red)'};
-    const pillCls={easy:'pill-easy',medium:'pill-medium',hard:'pill-hard'};
-    container.innerHTML=Object.entries(results).map(([tid,r])=>`
+  banner.className = 'result-banner';
+  status.textContent = 'Grading…';
+
+  try {
+    const params = new URLSearchParams({task_id: taskId, sql_query: sql});
+    const data   = await fetch(`/grader?${params}`, {method:'POST'}).then(r => r.json());
+    const score  = data.score  ?? 0;
+    const passed = data.passed ?? false;
+
+    document.getElementById('result-score').textContent =
+      (passed ? '✓ Passed · ' : score > 0.15 ? '~ Partial · ' : '✗ Failed · ') +
+      `score = ${score.toFixed(3)}`;
+    document.getElementById('result-feedback').textContent = data.feedback ?? '';
+    const diffEl = document.getElementById('result-diff');
+    if (data.result_diff) {
+      diffEl.textContent = 'Diff: ' + data.result_diff;
+      diffEl.style.display = 'block';
+    } else {
+      diffEl.style.display = 'none';
+    }
+    banner.className = 'result-banner show ' + (passed ? 'ok' : score > 0.15 ? 'partial' : 'fail');
+    status.textContent = '';
+
+    // Show hint if failed
+    const task = allTasks.find(t => t.task_id === taskId);
+    const hb   = document.getElementById('hint-box');
+    if (!passed && task && task.broken_query) {
+      // Hint is in task if available from /tasks — we stored it implicitly
+      hb.style.display = 'none';
+    }
+
+    // Update card
+    scoreCache[taskId] = score;
+    const fill = document.getElementById('fill-' + taskId);
+    const num  = document.getElementById('snum-' + taskId);
+    if (fill) fill.style.width = (score * 100) + '%';
+    if (num)  num.textContent  = score.toFixed(2);
+
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+  } finally {
+    spin.classList.remove('show');
+  }
+}
+
+// ── Baseline ──────────────────────────────────────────────────────────────────
+async function runBaseline() {
+  const spin    = document.getElementById('baseline-spin');
+  const grid    = document.getElementById('baseline-grid');
+  const summary = document.getElementById('baseline-summary');
+
+  spin.classList.add('show');
+  grid.innerHTML = '<div style="grid-column:1/-1;" class="loading-ph">Running oracle on all 20 tasks…</div>';
+  summary.textContent = '';
+
+  try {
+    const data    = await fetch('/baseline').then(r => r.json());
+    const results = data.results ?? {};
+    const avg     = data.average_score ?? 0;
+    const byDiff  = data.by_difficulty ?? {};
+
+    const cols   = {easy:'var(--green)',medium:'var(--amber)',hard:'var(--red)'};
+    const pcls   = {easy:'pill-easy',medium:'pill-medium',hard:'pill-hard'};
+
+    grid.innerHTML = Object.entries(results).map(([tid, r]) => `
       <div class="br-card">
         <div class="br-header">
-          <span class="diff-pill ${pillCls[tid]}">${tid}</span>
-          <span style="font-family:'DM Mono',monospace;font-size:15px;color:${r.passed?'var(--green)':'var(--red)'};">${r.passed?'✓ passed':'✗ failed'}</span>
+          <span class="diff-pill ${pcls[r.difficulty]}">${r.difficulty}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;color:${r.passed?'var(--green)':'var(--red)'};">${r.passed?'✓':'✗'}</span>
         </div>
-        <div class="br-score" style="color:${colors[tid]}">${r.score.toFixed(2)}</div>
-        <div style="height:3px;background:var(--paper);border:1px solid var(--ink3);margin:8px 0 10px;">
-          <div style="height:100%;width:${r.score*100}%;background:${colors[tid]};transition:width .8s;"></div>
-        </div>
-        <div class="br-feedback">${r.feedback}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-bottom:2px;">${tid}</div>
+        <div class="br-score" style="color:${cols[r.difficulty]}">${r.score.toFixed(3)}</div>
+        <div class="br-bar"><div class="br-fill" style="width:${r.score*100}%;background:${cols[r.difficulty]};"></div></div>
+        <div class="br-feedback">${(r.feedback||'').split('|')[0].trim()}</div>
       </div>`).join('');
-    avgEl.textContent=`average score: ${avg.toFixed(4)}  ·  oracle agent (submits known-correct query)`;
-    Object.entries(results).forEach(([tid,r])=>{
-      const fill=document.getElementById('fill-'+tid);
-      const num=document.getElementById('snum-'+tid);
-      if(fill)fill.style.width=(r.score*100)+'%';
-      if(num)num.textContent=r.score.toFixed(2);
+
+    const byStr = Object.entries(byDiff).map(([d,s]) => `${d}: ${s.toFixed(3)}`).join('  ·  ');
+    summary.textContent = `average: ${avg.toFixed(4)}  ·  ${byStr}  ·  oracle agent (known-correct queries)`;
+
+    Object.entries(results).forEach(([tid, r]) => {
+      scoreCache[tid] = r.score;
+      const f = document.getElementById('fill-' + tid);
+      const n = document.getElementById('snum-' + tid);
+      if (f) f.style.width = (r.score * 100) + '%';
+      if (n) n.textContent  = r.score.toFixed(2);
     });
-  }catch(e){
-    container.innerHTML=`<div style="color:var(--red);font-family:'DM Mono',monospace;font-size:15px;grid-column:1/-1;">Error: ${e.message}</div>`;
-  }finally{spin.classList.remove('show');}
+
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--red);font-family:'DM Mono',monospace;font-size:14px;grid-column:1/-1;">Error: ${e.message}</div>`;
+  } finally {
+    spin.classList.remove('show');
+  }
 }
 
-setTask('easy',document.querySelector('.ttab.active'));
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadTasks();
 </script>
+</body>
+</html>
